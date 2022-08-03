@@ -1,0 +1,8 @@
+{"type" : "T-PER", "prompts" : ["<span>是一个人", "和<span>一起吃午饭", "<span>结婚了", "<span>离职了"], "verbalizers" : ["张庆华", "胡亚春", "Tim Cook", "张三", "John"]}
+{"type" : "T-ORG", "prompts" : ["<span>是一个机构", "<span>是一个公司", "<span>上市了"], "verbalizers" : ["中国工商银行", "证监会", "腾讯", "苹果中国", "ST盐湖", "晨鸣控股"]}
+{"type" : "T-OFFICER", "prompts" : ["<span>是一个职位", "张三担任<span>", "张三卸任<span>", "<span>职位空缺"], "verbalizers" : ["董事长", "总经理", "副总经理", "首席执行官", "CEO", "COO", "CFO"]}
+{"type" : "MISC"}
+{"type" : "T-DATE", "re" : " "}
+{"type" : "T-NUM", "re" : " "}
+{"type" : "T-NUM-PERCENT", "re" : " "}
+{"type" : "T-NUM-MONEY", "re" : " "}
