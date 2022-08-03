@@ -1,7 +1,9 @@
 import logging
 import re
 from encoder import BERTSentenceEncoder
+from model import span2type,cal_ver_emb
 from data_loader import get_loader
+
 import util
 import torch
 import numpy as np
@@ -25,27 +27,22 @@ def process_schema(schema):
     for event_type in schema:
         num=[]
         for arg_type,arg_text in schema[event_type]['参数'].items():
-            tmp=arg_text.split('$')
+            tmp=arg_text.split('|')
 
             arg_span_type=tmp[0]
-            #arg_span_type=arg_span_type.replace('T-ORG','T-O')
-            #arg_span_type=arg_span_type.replace('T-PER','T-O')
-            #arg_span_type=arg_span_type.replace('T-OFFICE','T-O')
             arg_span_type=arg_span_type.split(',')
             print(arg_span_type)
             for i in range(len(arg_span_type)):
                 arg_span_type[i]=arg_span_type[i].strip()
             arg_span_type=set(arg_span_type)
-            if '^T-O'in arg_span_type:
-                arg_span_type.remove('^T-O')
-            arg_tmp_text=tmp[1].split('|')
+            
             schema[event_type]['参数'][arg_type]={}
             schema[event_type]['参数'][arg_type]['span_type']=list(arg_span_type)
-            schema[event_type]['参数'][arg_type]['tem']=arg_tmp_text
-            num.append(len(arg_tmp_text))
+            schema[event_type]['参数'][arg_type]['tem']=tmp[1:] if len(tmp) > 1 else None
+            num.append(len(tmp)-1)
         schema[event_type]['tem_num']=num
     print(schema)
-    with open(f'data/seen_schema/金融_tem.json', 'w',encoding='utf8') as f:
+    with open(f'/root/zero-shot/NewData/new.json', 'w',encoding='utf8') as f:
         json.dump(schema, f,ensure_ascii=False)
     return schema
 
@@ -63,39 +60,16 @@ def process_data(data_path):
     with open(f'{data_path}/train_val.json', 'w',encoding='utf8') as f:
         json.dump(val_data, f,ensure_ascii=False)
 
-def process_gold_span(data_path):
-    train_data = json.load(open(f'{data_path}/train_train.json', encoding='utf8'))
-    test_data = json.load(open(f'{data_path}/class_val.json', encoding='utf8'))
-    val_data = json.load(open(f'{data_path}/train_val.json', encoding='utf8'))
-    for key,value in test_data.items():
-        print(key,len(train_data[key]),len(val_data[key]),len(test_data[key]))
+def process_gold_span():
+    test_data=json.load(open(f'/root/zero-shot/NewData/test.json', encoding='utf8'))
+    
+    for value in test_data['EquityPledge']['data']:
         for data in value:
             for cal in data['args']:
-                #cos_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'cos')
-                #ou_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'ou')
-                #dot_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'dot')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-DATE','TIME')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-DATE','TIME')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-ORG','ORG')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-PER','PER')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-                cal['ou_span_type']=cal['ou_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-                cal['dot_span_type']=cal['dot_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-    for key,value in val_data.items():
-        for data in value:
-            for cal in data['args']:
-                #cos_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'cos')
-                #ou_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'ou')
-                #dot_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'dot')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-DATE','TIME')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-ORG','ORG')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-PER','PER')
-                cal['cos_span_type']=cal['cos_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-                cal['ou_span_type']=cal['ou_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-                cal['dot_span_type']=cal['dot_span_type'].replace('T-NUM-IN-PERCENT','T-NUM-PERCENT')
-    with open(f'{data_path}/train_val.json', 'w',encoding='utf8') as f:
-        json.dump(val_data, f,ensure_ascii=False)
-    with open(f'{data_path}/class_val.json', 'w',encoding='utf8') as f:
+                cos_type=span2type(cal['text'],data['text'],encoder,type_emb,span_types,prompt_tem,'cos')
+                cal['span_type']=cos_type
+        
+    with open(f'/root/zero-shot/NewData/test_one.json', 'w',encoding='utf8') as f:
         json.dump(test_data, f,ensure_ascii=False)
 
 def process_cal_span(data_path,types,schema):
@@ -398,15 +372,8 @@ if __name__ == "__main__":
     np.random.seed(opt.seed)
     random.seed(opt.seed)
     torch.backends.cudnn.deterministic = True
-    data_path='data/DUEE_FIN_LITE'
 
-    schema_folder = 'data/seen_schema'
-    schema_file = os.path.join(schema_folder, f'金融_tem.json')
-    schema=json.load(open(schema_file, encoding='utf8'))
-    log_name = "/home/yigao/data/ee/checkpoint/process/ee.log"
-    
-    logging.basicConfig(level=logging.INFO, filename=log_name,filemode = 'w')
-    logging.info(opt)
+    schema=load_definition_schema_file('/root/zero-shot/NewData/ChFinAnn.yaml')
     
     
     '''
@@ -414,8 +381,10 @@ if __name__ == "__main__":
     process_cal_span(data_path,'dev',schema)
     process_cal_span(data_path,'test',schema)
     #'''
-    
-    process_gold_span(data_path)
+    pretrain_ckpt ='FinBert'
+    encoder = BERTSentenceEncoder(pretrain_ckpt, opt.max_length,opt.train)
+    type_emb,span_types,prompt_tem=cal_ver_emb(encoder)
+    process_gold_span()
     #eval()
     
     

@@ -20,16 +20,12 @@ def similarity(x, y, dim1,dis):
         return NotImplementedError
 
 def span2type(cal_text,text,encoder,type_emb,span_types,prompt_tem,dis='cos'):
-    if cal_text in '股票' or cal_text in '股份':
-        return 'V-股票'
-    elif bool(re.search('[年月日]',cal_text)):
-        return 'T-DATE' 
+    if bool(re.search('[年月日]',cal_text)): 
+        return 'TIME' 
     elif '%' in cal_text:
         return 'T-NUM-PERCENT'
-    elif bool(re.search('[$￥元]',cal_text)):
-        return 'T-NUM-MONEY'
-    elif bool(re.search(r'\d',cal_text)):
-        return 'T-NUM'
+    elif bool(re.search(r'\d*股',cal_text)):
+        return 'T-NUM-SHARE'
     else:
         #return 'T-O'
         span_emb=[]
@@ -46,9 +42,9 @@ def span2type(cal_text,text,encoder,type_emb,span_types,prompt_tem,dis='cos'):
 
 def cal_ver_emb(encoder):
     encoder=encoder.cuda()
-    types=[json.loads(line) for line in open('data/seen_schema/types.json', encoding='utf8')]
+    types=[json.loads(line) for line in open('/root/zero-shot/NewData/types.json', encoding='utf8')]
     prompt_tem=[]
-    for span_type in types[:3]:
+    for span_type in types[:2]:
         prompt_tem+=span_type['prompts']
     type_emb=[]
     span_types=[]

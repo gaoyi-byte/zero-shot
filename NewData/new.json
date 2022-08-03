@@ -1,0 +1,98 @@
+{
+    "EquityPledge": {
+        "定义": "债务人或者第三人将其动产或权利移交债权人占有、作为债权担保的法律行为。",
+        "格式": "<质押方>于<披露时间>披露于<事件时间>以<质押物所属公司>的<质押物>向<质权方>质押债务，共质押<交易股票/股份数量>股，占其所持比例<质押物占持比>，占总股本比例为<质押物占总股比>。",
+        "参数": {
+            "Pledger": {
+                "span_type": [
+                    "PER",
+                    "ORG"
+                ],
+                "tem": [
+                    "<span>办理了质押业务",
+                    "<span>将所持股份质押给银行",
+                    "<span>向银行以本公司股票质押"
+                ]
+            },
+            "PledgedShares": {
+                "span_type": [
+                    "T-NUM-SHARE"
+                ],
+                "tem": [
+                    "累计质押股份<span>",
+                    "处于质押状态的股份数<span>"
+                ]
+            },
+            "Pledgee": {
+                "span_type": [
+                    "PER",
+                    "ORG"
+                ],
+                "tem": [
+                    "将持有股份质押给<span>",
+                    "向<span>质押股份"
+                ]
+            },
+            "StartDate": {
+                "span_type": [
+                    "TIME"
+                ],
+                "tem": [
+                    "质押期为<span>到2010年1月1日"
+                ]
+            },
+            "EndDate": {
+                "span_type": [
+                    "TIME"
+                ],
+                "tem": [
+                    "质押期为2010年1月1日到<span>"
+                ]
+            },
+            "ReleasedDate": {
+                "span_type": [
+                    "TIME"
+                ],
+                "tem": [
+                    ""
+                ]
+            },
+            "TotalHoldingShares": {
+                "span_type": [
+                    "T-NUM-SHARE"
+                ],
+                "tem": [
+                    "目前持有公司流通股<span>"
+                ]
+            },
+            "TotalHoldingRatio": {
+                "span_type": [
+                    "T-NUM-PERCENT"
+                ],
+                "tem": [
+                    "目前持有公司流通股1股，占公司总股本的<span>"
+                ]
+            },
+            "TotalPledgedShares\"": {
+                "span_type": [
+                    "T-NUM-SHARE"
+                ],
+                "tem": [
+                    "累计被质押的数量为<span>",
+                    "累计质押本公司股权为<span>"
+                ]
+            }
+        },
+        "tem_num": [
+            3,
+            2,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2
+        ]
+    }
+}

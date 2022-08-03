@@ -270,6 +270,90 @@ def few_shot(opt,model,event_types):
     print('testing')
     zero_shot(opt,model,event_types,test_data,f'{model_path}/{opt.sim}{opt.tag}-{opt.k}-max.pth')
 
+def zero_shot_newdata(opt,model,event_types,test_data,ckpt=None):
+    model.eval()
+    model.update_schema()
+    print('test',len(test_data))
+    #type_emb,span_types=cal_ver_emb(model.encoder)
+    score=EventScorer(match_mode='set')
+    
+    for data,args in tqdm(test_data):
+        for key in data:
+            data[key]=data[key].cuda()
+        with torch.no_grad():
+            
+            sen_embs,logits,label=model(data,args,mask=True)#tuple(b*logits)
+        for b in range(len(logits)):
+            type2label=model.schema_info[args[b]['label']]['type2label']
+            types=model.schema_info[args[b]['label']]['types']
+            args_span={}
+            if logits[b]==[]:
+                continue
+            _, pred = torch.max(logits[b], -1) #(N,1)
+            arguments={}
+            for i,cal in enumerate(args[b]['cal_args']):
+                pred_id=pred[i]
+                if opt.test=='0':
+                    pred_label=types[pred_id]
+                    cal['pred_type']=pred_label
+                elif '1' in opt.test:
+                    if logits[b][i][pred_id]==0:
+                        print('#####')
+                        cal['pred_type']=None
+                        continue  
+                    else:
+                        pred_label=types[pred_id]
+                        cal['pred_type']=pred_label
+                if '2' in opt.test:
+                    if pred_label in args_span:
+                        pre_cal_id=args_span[pred_label]
+                        if logits[b][i][pred_id]>logits[b][pre_cal_id][pred_id]:
+                            args[b]['cal_args'][pre_cal_id]['pred_type']=None
+                            args_span[pred_label]=i
+                        else:
+                            cal['pred_type']=None
+                    else:
+                        args_span[pred_label]=i
+                if '3' in opt.test:
+                    if pred_label in arguments:
+                        arguments[pred_label].append(cal['text'])
+                    else:
+                        arguments[pred_label]=[cal['text']]
+                    rank(sen_embs[b],args[b],arguments)
+            
+            #rank(sen_embs[b],args[b],arguments)
+            #sys.exit()
+
+            if opt.log_error:
+                logging.info('##########################################################\n')
+                logging.info(f"{args[b]['label']}:{args[b]['text']}")
+                logging.info('')
+                
+                logging.info('真实span的标签')
+                for i,cal in enumerate(args[b]['gold_args']):
+                    #print(f"{cal['text']}  的gold标签是：{cal['type']},预测标签是：{types[pred[i]]},与gold的sim是：{logits[i][label[i]]},与预测的sim是：{logits[i][pred[i]]}")
+                    logging.info((f"{cal['text']} 实体类型：{cal['type']}"))
+                
+                
+                logging.info('预测span的标签:')
+                for i,cal in enumerate(args[b]['cal_args']):
+                    if not cal['pred_type']:
+                        logging.info(f"{cal['text']} 实体类型：{cal['span_type']},reject")
+                        continue
+                    #print(f"{cal['text']}  的gold标签是：{cal['type']},预测标签是：{types[pred[i]]},与gold的sim是：{logits[i][label[i]]},与预测的sim是：{logits[i][pred[i]]}")
+                    logging.info((f"{cal['text']} 实体类型：{cal['span_type']} |预测标签是：{cal['pred_type']}"))
+                    for j in list(schema_tem[args[b]['label']]['参数'].keys()):
+                            #print(f"{cal['text']}与{j}的sim是：{logits[i][type2label[j]]}")
+                        logging.info(f"{cal['text']}与{j}的sim是：{logits[b][i][type2label[j]]}")
+                        #print('')
+                    logging.info('')
+        label_list,pred_list=score.load_sen_list(args)
+        result=score.eval_instance_list(pred_list,label_list)
+    
+    print(f"[EVAL]:{event_types},offset_f1:{result['offset-F1']},string-f1:{result['string-F1']}")
+    logging.info(f"[EVAL]:{event_types}, offset_f1:{result['offset-F1']},string-f1:{result['string-F1']},all:{result}")
+    return result
+
 
 if __name__ == "__main__":
 
